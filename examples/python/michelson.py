@@ -12,6 +12,12 @@ def get_amount() -> mutez:
 def make_list() -> List:
     return []
 
+def smart_contract(storage: mutez, param: mutez) -> (List[Operation], mutez):
+    amount: Final[mutez] = get_amount()
+    list: Final[List[Operation]] = make_list()
+    return list, amount
+
+
 # a: Final[mutez] = get_amount()
 # y: Final[mutez] = 20
 # list: Final[List[Operation]] = make_list()
