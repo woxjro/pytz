@@ -137,3 +137,24 @@ pub mod mlir {
         }
     }
 }
+
+pub mod python {
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum AnnotationToken {
+        Final,
+        Mutez,
+        Operation,
+        List,
+    }
+
+    impl ToString for AnnotationToken {
+        fn to_string(&self) -> String {
+            match self {
+                Self::Final => "Final".to_string(),
+                Self::Mutez => "mutez".to_string(),
+                Self::Operation => "Operation".to_string(),
+                Self::List => "List".to_string(),
+            }
+        }
+    }
+}
