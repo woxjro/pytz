@@ -9,6 +9,7 @@ fn main() {
     let ast = ast::Suite::parse(python_source, "<embedded>").unwrap();
 
     let mut operations = vec![];
+    let mut type_env = vec![];
     for stmt in ast {
         if let ast::Stmt::FunctionDef(stmt_function_def) = stmt {
             if stmt_function_def.name.contains("smart_contract") {
@@ -17,9 +18,9 @@ fn main() {
                     ast::Stmt::AnnAssign(stmt_ann_assign) => {
                         // annotation should be Final[]
                         let value = get_value_from_annassign(stmt.to_owned());
-                        // dbg!(&value);
 
                         if let Some(value) = value {
+                            type_env.push(value.to_owned());
                             if let Some(call) = stmt_ann_assign.value.as_ref() {
                                 if let ast::Expr::Call(expr_call) = *call.to_owned() {
                                     let func = *expr_call.func.to_owned();
@@ -45,6 +46,38 @@ fn main() {
                                                 }],
                                             };
                                             operations.push(op);
+                                        } else if id == "make_pair" {
+                                            let args = expr_call
+                                                .args
+                                                .to_owned()
+                                                .iter()
+                                                .map(|arg| {
+                                                    if let ast::Expr::Name(expr_name) = arg {
+                                                        let id: String =
+                                                            expr_name.id.to_owned().into();
+                                                        let value = type_env
+                                                            .iter()
+                                                            .find(|value| {
+                                                                value.id == format!("%{}", id)
+                                                            })
+                                                            .unwrap();
+                                                        value.to_owned()
+                                                    } else {
+                                                        panic!();
+                                                    }
+                                                })
+                                                .collect::<Vec<Value>>();
+                                            let op = Operation {
+                                                kind: OperationKind::MakePair,
+                                                args,
+                                                results: vec![Value {
+                                                    id: value.id,
+                                                    ty: value.ty,
+                                                }],
+                                            };
+                                            operations.push(op);
+                                        } else {
+                                            todo!("{id} is not supported");
                                         }
                                     }
                                 }
@@ -85,8 +118,21 @@ fn get_mlir_type_from_annotation(annotation: ast::Expr) -> Type {
                             *expr_subscript.slice.to_owned(),
                         )),
                     }
+                } else if id == AnnotationToken::Pair.to_string() {
+                    if let ast::Expr::Tuple(expr_tuple) = *expr_subscript.slice.to_owned() {
+                        let mut types = vec![];
+                        for expr in expr_tuple.elts {
+                            types.push(get_mlir_type_from_annotation(expr));
+                        }
+                        Type::Pair {
+                            fst: Box::new(types[0].to_owned()),
+                            snd: Box::new(types[1].to_owned()),
+                        }
+                    } else {
+                        panic!();
+                    }
                 } else {
-                    todo!();
+                    todo!("{id} is not supported");
                 }
             } else {
                 panic!();

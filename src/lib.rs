@@ -182,6 +182,7 @@ pub mod python {
         Mutez,
         Operation,
         List,
+        Pair,
     }
 
     impl ToString for AnnotationToken {
@@ -191,6 +192,7 @@ pub mod python {
                 Self::Mutez => "mutez".to_string(),
                 Self::Operation => "Operation".to_string(),
                 Self::List => "List".to_string(),
+                Self::Pair => "Pair".to_string(),
             }
         }
     }
