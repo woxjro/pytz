@@ -43,6 +43,8 @@ pub mod mlir {
         fn to_string(&self) -> String {
             match self.kind {
                 OperationKind::MakePair => {
+                    assert_eq!(self.results.len(), 1);
+                    assert_eq!(self.args.len(), 2);
                     let result_type = Type::Pair {
                         fst: Box::new(self.args[0].ty.clone()),
                         snd: Box::new(self.args[1].ty.clone()),
@@ -53,18 +55,17 @@ pub mod mlir {
                     )
                 }
                 OperationKind::MakeList => {
-                    /*
-                    let mut res = format!("make_list");
-                    for arg in &self.args {
-                        res.push_str(&format!(" {}", arg.id));
-                    }
-                    res
-                    */
-                    todo!()
+                    assert_eq!(self.results.len(), 1);
+                    assert_eq!(self.args.len(), 0);
+                    let result = &self.results[0];
+                    format!("{} = !michelson.make_list(): {}", result.id, result.ty)
                 }
                 OperationKind::GetAmount => {
-                    // format!("get_amount {}", self.args[0].id)
-                    todo!()
+                    assert_eq!(self.results.len(), 1);
+                    assert_eq!(self.args.len(), 0);
+                    assert_eq!(self.results[0].ty, Type::Mutez);
+                    let result = &self.results[0];
+                    format!("{} = !michelson.get_amount(): {}", result.id, result.ty)
                 }
             }
         }
@@ -133,6 +134,42 @@ pub mod mlir {
             assert_eq!(
                 op.to_string(),
                 "%0 = !michelson.make_pair(%a, %b): !michelson.pair<!michelson.mutez, !michelson.operation>"
+            );
+        }
+
+        #[test]
+        fn test_make_list_to_string() {
+            let op = Operation {
+                kind: OperationKind::MakeList,
+                args: vec![],
+                results: vec![Value {
+                    id: "%0".to_string(),
+                    ty: Type::List {
+                        elem: Box::new(Type::Mutez),
+                    },
+                }],
+            };
+
+            assert_eq!(
+                op.to_string(),
+                "%0 = !michelson.make_list(): !michelson.list<!michelson.mutez>"
+            );
+        }
+
+        #[test]
+        fn test_get_amount_to_string() {
+            let op = Operation {
+                kind: OperationKind::GetAmount,
+                args: vec![],
+                results: vec![Value {
+                    id: "%0".to_string(),
+                    ty: Type::Mutez,
+                }],
+            };
+
+            assert_eq!(
+                op.to_string(),
+                "%0 = !michelson.get_amount(): !michelson.mutez"
             );
         }
     }
