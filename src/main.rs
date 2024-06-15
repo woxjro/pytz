@@ -1,5 +1,5 @@
 use pytz::{
-    mlir::{Type, Value},
+    mlir::{Operation, OperationKind, Type, Value},
     python::AnnotationToken,
 };
 use rustpython_parser::{ast, Parse};
@@ -8,53 +8,58 @@ fn main() {
     let python_source = include_str!("../examples/python/michelson.py");
     let ast = ast::Suite::parse(python_source, "<embedded>").unwrap();
 
+    let mut operations = vec![];
     for stmt in ast {
-        match stmt {
-            ast::Stmt::FunctionDef(stmt_function_def) => {
-                if stmt_function_def.name.contains("smart_contract") {
-                    stmt_function_def.body.iter().for_each(|stmt| match stmt {
-                        // Annotated Assignment
-                        ast::Stmt::AnnAssign(stmt_ann_assign) => {
-                            // annotation should be Final[]
-                            let annotation = *stmt_ann_assign.annotation.to_owned();
-                            if let ast::Expr::Subscript(expr_subscript) = annotation.to_owned() {
-                                let value = *expr_subscript.value.to_owned();
-                                if let ast::Expr::Name(expr_name) = value.to_owned() {
-                                    let id: String = expr_name.id.into();
-                                    if id == AnnotationToken::Final.to_string() {
-                                        let ty = get_mlir_type_from_annotation(
-                                            *expr_subscript.slice.to_owned(),
-                                        );
-                                        let target = *stmt_ann_assign.target.to_owned();
-                                        if let ast::Expr::Name(expr_name) = target {
-                                            let id: String = expr_name.id.into();
-                                            let value = Value { id, ty };
-                                            dbg!(&value);
-                                            dbg!(&stmt_ann_assign);
-                                        }
-                                    } else {
-                                        panic!("Annotation should be Final[]");
-                                    }
-                                }
-                            }
+        if let ast::Stmt::FunctionDef(stmt_function_def) = stmt {
+            if stmt_function_def.name.contains("smart_contract") {
+                stmt_function_def.body.iter().for_each(|stmt| match stmt {
+                    // Annotated Assignment
+                    ast::Stmt::AnnAssign(stmt_ann_assign) => {
+                        // annotation should be Final[]
+                        let value = get_value_from_annassign(stmt.to_owned());
+                        // dbg!(&value);
 
+                        if let Some(value) = value {
                             if let Some(call) = stmt_ann_assign.value.as_ref() {
                                 if let ast::Expr::Call(expr_call) = *call.to_owned() {
                                     let func = *expr_call.func.to_owned();
                                     if let ast::Expr::Name(expr_name) = func {
                                         let id: String = expr_name.id.into();
-                                        if id == "make_list" {}
+                                        if id == "make_list" {
+                                            let op = Operation {
+                                                kind: OperationKind::MakeList,
+                                                args: vec![],
+                                                results: vec![Value {
+                                                    id: value.id,
+                                                    ty: value.ty,
+                                                }],
+                                            };
+                                            operations.push(op);
+                                        } else if id == "get_amount" {
+                                            let op = Operation {
+                                                kind: OperationKind::GetAmount,
+                                                args: vec![],
+                                                results: vec![Value {
+                                                    id: value.id,
+                                                    ty: value.ty,
+                                                }],
+                                            };
+                                            operations.push(op);
+                                        }
                                     }
                                 }
                             }
                         }
-                        ast::Stmt::Return(..) => {}
-                        _ => {}
-                    });
-                }
+                    }
+                    ast::Stmt::Return(..) => {}
+                    _ => {}
+                });
             }
-            _ => {}
         }
+    }
+
+    for op in operations {
+        println!("{}", op.to_string());
     }
 }
 
@@ -88,5 +93,42 @@ fn get_mlir_type_from_annotation(annotation: ast::Expr) -> Type {
             }
         }
         _ => panic!("Annotation should be Final[]"),
+    }
+}
+
+// expected input: v: Final[mutez] = get_amount()
+// expected output: Some(Value { id: "v", ty: Type::Mutez })
+fn get_value_from_annassign(stmt: ast::Stmt) -> Option<Value> {
+    // Annotated Assignment
+    if let ast::Stmt::AnnAssign(stmt_ann_assign) = stmt {
+        // annotation should be Final[]
+        let annotation = *stmt_ann_assign.annotation.to_owned();
+        if let ast::Expr::Subscript(expr_subscript) = annotation.to_owned() {
+            let value = *expr_subscript.value.to_owned();
+            if let ast::Expr::Name(expr_name) = value.to_owned() {
+                let id: String = expr_name.id.into();
+                if id == AnnotationToken::Final.to_string() {
+                    let ty = get_mlir_type_from_annotation(*expr_subscript.slice.to_owned());
+                    let target = *stmt_ann_assign.target.to_owned();
+                    if let ast::Expr::Name(expr_name) = target {
+                        let id: String = expr_name.id.into();
+                        Some(Value {
+                            id: format!("%{id}"),
+                            ty,
+                        })
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    } else {
+        None
     }
 }
