@@ -1,24 +1,31 @@
-from typing import Final, List
+from dataclasses import dataclass
+from typing import Final, List, TypeVar, Generic
 
 mutez = int
 
 class Operation:
     pass
 
+T = TypeVar('T')
+U = TypeVar('U')
+
+@dataclass
+class Pair(Generic[T, U]):
+    first: T
+    second: U
+
+def make_pair(first: T, second: U) -> Pair[T, U]:
+    return Pair(first, second)
+
 def get_amount() -> mutez:
-    DUMMY_AMOUNT: Final[mutez] = 0
+    DUMMY_AMOUNT: Final[mutez] = 5000
     return DUMMY_AMOUNT
 
 def make_list() -> List:
     return []
 
-def smart_contract(storage: mutez, param: mutez) -> (List[Operation], mutez):
+def smart_contract(storage: mutez, param: mutez) -> Pair[List[Operation], mutez]:
     amount: Final[mutez] = get_amount()
-    list: Final[List[Operation]] = make_list()
-    return list, amount
-
-
-# a: Final[mutez] = get_amount()
-# y: Final[mutez] = 20
-# list: Final[List[Operation]] = make_list()
-# list.append(Operation())
+    operations: Final[List[Operation]] = make_list()
+    p: Final[Pair[List[Operation], mutez]] = make_pair(operations, amount)
+    return p
