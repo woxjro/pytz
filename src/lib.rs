@@ -19,6 +19,7 @@ pub mod mlir {
         MakePair,
         MakeList,
         GetAmount,
+        Return,
     }
 
     #[derive(Debug, Clone, PartialEq)]
@@ -50,22 +51,38 @@ pub mod mlir {
                         snd: Box::new(self.args[1].ty.clone()),
                     };
                     format!(
-                        "{} = !michelson.make_pair({}, {}): {result_type}",
-                        self.results[0].id, self.args[0].id, self.args[1].id
+                        "{} = \"michelson.make_pair\"({}, {}): ({}, {}) -> {result_type}",
+                        self.results[0].id,
+                        self.args[0].id,
+                        self.args[1].id,
+                        self.args[0].ty,
+                        self.args[1].ty,
                     )
                 }
                 OperationKind::MakeList => {
                     assert_eq!(self.results.len(), 1);
                     assert_eq!(self.args.len(), 0);
                     let result = &self.results[0];
-                    format!("{} = !michelson.make_list(): {}", result.id, result.ty)
+                    format!(
+                        "{} = \"michelson.make_list\"(): () -> {}",
+                        result.id, result.ty
+                    )
                 }
                 OperationKind::GetAmount => {
                     assert_eq!(self.results.len(), 1);
                     assert_eq!(self.args.len(), 0);
                     assert_eq!(self.results[0].ty, Type::Mutez);
                     let result = &self.results[0];
-                    format!("{} = !michelson.get_amount(): {}", result.id, result.ty)
+                    format!(
+                        "{} = \"michelson.get_amount\"(): () -> {}",
+                        result.id, result.ty
+                    )
+                }
+                OperationKind::Return => {
+                    assert_eq!(self.results.len(), 0);
+                    assert_eq!(self.args.len(), 1);
+                    let arg = &self.args[0];
+                    format!("return {}: {}", arg.id, arg.ty)
                 }
             }
         }

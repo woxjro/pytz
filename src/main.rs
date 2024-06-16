@@ -13,6 +13,11 @@ fn main() {
     for stmt in ast {
         if let ast::Stmt::FunctionDef(stmt_function_def) = stmt {
             if stmt_function_def.name.contains("smart_contract") {
+                for arg in stmt_function_def.args.args {
+                    let value = get_mlir_value_from_function_arg(arg.to_owned());
+                    type_env.push(value.to_owned());
+                }
+
                 stmt_function_def.body.iter().for_each(|stmt| match stmt {
                     // Annotated Assignment
                     ast::Stmt::AnnAssign(stmt_ann_assign) => {
@@ -84,16 +89,52 @@ fn main() {
                             }
                         }
                     }
-                    ast::Stmt::Return(..) => {}
+                    ast::Stmt::Return(stmt_return) => {
+                        let value = *stmt_return.value.to_owned().unwrap();
+                        if let ast::Expr::Name(expr_name) = value {
+                            let id: String = expr_name.id.into();
+                            let value = type_env
+                                .iter()
+                                .find(|value| value.id == format!("%{}", id))
+                                .unwrap();
+                            let op = Operation {
+                                kind: OperationKind::Return,
+                                args: vec![value.to_owned()],
+                                results: vec![],
+                            };
+                            operations.push(op);
+                        }
+                    }
                     _ => {}
                 });
             }
         }
     }
 
+    let storage = type_env
+        .iter()
+        .find(|value| value.id == "%storage")
+        .unwrap();
+    let param = type_env.iter().find(|value| value.id == "%param").unwrap();
+    println!("module {{");
+    println!(
+        "  func.func @smart_contract({}: {}, {}: {}) -> {} {{",
+        param.id,
+        param.ty,
+        storage.id,
+        storage.ty,
+        Type::Pair {
+            fst: Box::new(Type::List {
+                elem: Box::new(Type::Operation)
+            }),
+            snd: Box::new(storage.ty.to_owned())
+        }
+    );
     for op in operations {
-        println!("{}", op.to_string());
+        println!("    {}", op.to_string());
     }
+    println!("  }}");
+    println!("}}");
 }
 
 fn get_mlir_type_from_annotation(annotation: ast::Expr) -> Type {
@@ -140,6 +181,13 @@ fn get_mlir_type_from_annotation(annotation: ast::Expr) -> Type {
         }
         _ => panic!("Annotation should be Final[]"),
     }
+}
+
+fn get_mlir_value_from_function_arg(arg: ast::ArgWithDefault) -> Value {
+    let arg = arg.def;
+    let id = format!("%{}", arg.arg);
+    let ty = get_mlir_type_from_annotation(*arg.annotation.unwrap());
+    Value { id, ty }
 }
 
 // expected input: v: Final[mutez] = get_amount()
