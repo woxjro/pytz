@@ -106,16 +106,75 @@ pub mod mlir {
                     )
                 }
                 OperationKind::GetContract => {
-                    todo!()
+                    assert_eq!(self.results.len(), 1);
+                    assert_eq!(self.args.len(), 1);
+                    if let Type::Option { elem } = &self.results[0].ty {
+                        if let Type::Contract { .. } = &**elem {
+                        } else {
+                            panic!("Expected Contract<..>");
+                        }
+                    } else {
+                        panic!("Expected Option<Contract<..>>");
+                    }
+
+                    let result = &self.results[0];
+                    write!(
+                        f,
+                        "{} = \"michelson.get_contract\"({}): ({}) -> {}",
+                        result.id, self.args[0].id, self.args[0].ty, result.ty
+                    )
                 }
                 OperationKind::AssertSome => {
-                    todo!()
+                    assert_eq!(self.results.len(), 1);
+                    assert_eq!(self.args.len(), 1);
+                    if let Type::Option { .. } = &self.args[0].ty {
+                    } else {
+                        panic!("Expected Option<..>");
+                    }
+
+                    let result = &self.results[0];
+
+                    write!(
+                        f,
+                        "{} = \"michelson.assert_some\"({}): ({}) -> {}",
+                        result.id, self.args[0].id, self.args[0].ty, result.ty
+                    )
                 }
                 OperationKind::TransferTokens => {
-                    todo!()
+                    // %operation = "michelson.transfer_tokens"(%parameter, %amount, %contract) :
+                    // (!michelson.unit, !michelson.mutez, !michelson.contract<!michelson.unit>) -> !michelson.operation
+                    assert_eq!(self.results.len(), 1);
+                    assert_eq!(self.args.len(), 3);
+                    let result = &self.results[0];
+                    write!(
+                        f,
+                        "{} = \"michelson.transfer_tokens\"({}, {}, {}): ({}, {}, {}) -> {}",
+                        result.id,
+                        self.args[0].id,
+                        self.args[1].id,
+                        self.args[2].id,
+                        self.args[0].ty,
+                        self.args[1].ty,
+                        self.args[2].ty,
+                        result.ty
+                    )
                 }
                 OperationKind::Append => {
-                    todo!()
+                    // %operations = "michelson.cons"(%nil, %operation) :
+                    // (!michelson.list<!michelson.operation>, !michelson.operation) -> !michelson.list<!michelson.operation>
+                    assert_eq!(self.results.len(), 1);
+                    assert_eq!(self.args.len(), 2);
+                    let result = &self.results[0];
+                    write!(
+                        f,
+                        "{} = \"michelson.cons\"({}, {}): ({}, {}) -> {}",
+                        result.id,
+                        self.args[0].id,
+                        self.args[1].id,
+                        self.args[0].ty,
+                        self.args[1].ty,
+                        result.ty
+                    )
                 }
 
                 OperationKind::Return => {

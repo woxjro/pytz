@@ -23,7 +23,7 @@ fn main() {
                     ast::Stmt::AnnAssign(stmt_ann_assign) => {
                         // annotation should be Final[]
                         let value = get_value_from_annassign(stmt.to_owned());
-
+                        dbg!(&value);
                         if let Some(value) = value {
                             type_env.push(value.to_owned());
                             if let Some(call) = stmt_ann_assign.value.as_ref() {
@@ -92,13 +92,125 @@ fn main() {
                                             };
                                             operations.push(op);
                                         } else if id == "get_contract" {
-                                            todo!()
+                                            let args = expr_call
+                                                .args
+                                                .to_owned()
+                                                .iter()
+                                                .map(|arg| {
+                                                    if let ast::Expr::Name(expr_name) = arg {
+                                                        let id: String =
+                                                            expr_name.id.to_owned().into();
+                                                        let value = type_env
+                                                            .iter()
+                                                            .find(|value| {
+                                                                value.id == format!("%{}", id)
+                                                            })
+                                                            .unwrap();
+                                                        value.to_owned()
+                                                    } else {
+                                                        panic!();
+                                                    }
+                                                })
+                                                .collect::<Vec<Value>>();
+                                            let op = Operation {
+                                                kind: OperationKind::GetContract,
+                                                args,
+                                                results: vec![Value {
+                                                    id: value.id,
+                                                    ty: value.ty,
+                                                }],
+                                            };
+                                            operations.push(op);
                                         } else if id == "assert_some" {
-                                            todo!()
+                                            let args = expr_call
+                                                .args
+                                                .to_owned()
+                                                .iter()
+                                                .map(|arg| {
+                                                    if let ast::Expr::Name(expr_name) = arg {
+                                                        let id: String =
+                                                            expr_name.id.to_owned().into();
+                                                        let value = type_env
+                                                            .iter()
+                                                            .find(|value| {
+                                                                value.id == format!("%{}", id)
+                                                            })
+                                                            .unwrap();
+                                                        value.to_owned()
+                                                    } else {
+                                                        panic!();
+                                                    }
+                                                })
+                                                .collect::<Vec<Value>>();
+                                            let op = Operation {
+                                                kind: OperationKind::AssertSome,
+                                                args,
+                                                results: vec![Value {
+                                                    id: value.id,
+                                                    ty: value.ty,
+                                                }],
+                                            };
+                                            operations.push(op);
                                         } else if id == "transfer_tokens" {
-                                            todo!()
+                                            let args = expr_call
+                                                .args
+                                                .to_owned()
+                                                .iter()
+                                                .map(|arg| {
+                                                    if let ast::Expr::Name(expr_name) = arg {
+                                                        let id: String =
+                                                            expr_name.id.to_owned().into();
+                                                        let value = type_env
+                                                            .iter()
+                                                            .find(|value| {
+                                                                value.id == format!("%{}", id)
+                                                            })
+                                                            .unwrap();
+                                                        value.to_owned()
+                                                    } else {
+                                                        panic!();
+                                                    }
+                                                })
+                                                .collect::<Vec<Value>>();
+                                            let op = Operation {
+                                                kind: OperationKind::TransferTokens,
+                                                args,
+                                                results: vec![Value {
+                                                    id: value.id,
+                                                    ty: value.ty,
+                                                }],
+                                            };
+                                            operations.push(op);
                                         } else if id == "append" {
-                                            todo!()
+                                            let args = expr_call
+                                                .args
+                                                .to_owned()
+                                                .iter()
+                                                .map(|arg| {
+                                                    if let ast::Expr::Name(expr_name) = arg {
+                                                        let id: String =
+                                                            expr_name.id.to_owned().into();
+                                                        let value = type_env
+                                                            .iter()
+                                                            .find(|value| {
+                                                                value.id == format!("%{}", id)
+                                                            })
+                                                            .unwrap();
+                                                        value.to_owned()
+                                                    } else {
+                                                        panic!();
+                                                    }
+                                                })
+                                                .collect::<Vec<Value>>();
+                                            let op = Operation {
+                                                kind: OperationKind::Append,
+                                                args,
+                                                results: vec![Value {
+                                                    id: value.id,
+                                                    ty: value.ty,
+                                                }],
+                                            };
+                                            operations.push(op);
                                         } else {
                                             todo!("{id} is not supported");
                                         }

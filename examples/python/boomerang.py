@@ -71,7 +71,7 @@ def smart_contract(storage: Unit, param: Unit) -> Pair[List[Operation], Unit]:
     address: Final[addr] = get_source()
     some_contract: Final[Optional[Contract[Unit]]] = get_contract(address)
     contract: Final[Contract[Unit]] = assert_some(some_contract)
-    operation: Final[Operation] = transfer_tokens(Unit(), amount, contract)
+    operation: Final[Operation] = transfer_tokens(param, amount, contract)
     operations: Final[List[Operation]] = append(nil, operation)
 
     p: Final[Pair[List[Operation], Unit]] = make_pair(operations, param)
