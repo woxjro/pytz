@@ -8,8 +8,12 @@ pub mod mlir {
 
     #[derive(Debug, Clone, PartialEq)]
     pub enum Type {
+        Address,
+        Unit,
         Mutez,
         Operation,
+        Contract { param: Box<Type> },
+        Option { elem: Box<Type> },
         List { elem: Box<Type> },
         Pair { fst: Box<Type>, snd: Box<Type> },
     }
@@ -19,6 +23,11 @@ pub mod mlir {
         MakePair,
         MakeList,
         GetAmount,
+        GetSource,
+        GetContract,
+        AssertSome,
+        TransferTokens,
+        Append,
         Return,
     }
 
@@ -32,8 +41,12 @@ pub mod mlir {
     impl std::fmt::Display for Type {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             match self {
+                Self::Address => write!(f, "!michelson.address"),
+                Self::Unit => write!(f, "!michelson.unit"),
                 Self::Mutez => write!(f, "!michelson.mutez"),
+                Self::Contract { param } => write!(f, "!michelson.contract<{}>", param),
                 Self::Operation => write!(f, "!michelson.operation"),
+                Self::Option { elem } => write!(f, "!michelson.option<{}>", elem),
                 Self::List { elem } => write!(f, "!michelson.list<{}>", elem),
                 Self::Pair { fst, snd } => write!(f, "!michelson.pair<{}, {}>", fst, snd),
             }
@@ -78,6 +91,29 @@ pub mod mlir {
                         result.id, result.ty
                     )
                 }
+                OperationKind::GetSource => {
+                    assert_eq!(self.results.len(), 1);
+                    assert_eq!(self.args.len(), 0);
+                    assert_eq!(self.results[0].ty, Type::Address);
+                    let result = &self.results[0];
+                    format!(
+                        "{} = \"michelson.get_source\"(): () -> {}",
+                        result.id, result.ty
+                    )
+                }
+                OperationKind::GetContract => {
+                    todo!()
+                }
+                OperationKind::AssertSome => {
+                    todo!()
+                }
+                OperationKind::TransferTokens => {
+                    todo!()
+                }
+                OperationKind::Append => {
+                    todo!()
+                }
+
                 OperationKind::Return => {
                     assert_eq!(self.results.len(), 0);
                     assert_eq!(self.args.len(), 1);
@@ -202,14 +238,14 @@ pub mod python {
         Pair,
     }
 
-    impl ToString for AnnotationToken {
-        fn to_string(&self) -> String {
+    impl std::fmt::Display for AnnotationToken {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             match self {
-                Self::Final => "Final".to_string(),
-                Self::Mutez => "mutez".to_string(),
-                Self::Operation => "Operation".to_string(),
-                Self::List => "List".to_string(),
-                Self::Pair => "Pair".to_string(),
+                Self::Final => write!(f, "Final"),
+                Self::Mutez => write!(f, "mutez"),
+                Self::Operation => write!(f, "Operation"),
+                Self::List => write!(f, "List"),
+                Self::Pair => write!(f, "Pair"),
             }
         }
     }

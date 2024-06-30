@@ -81,6 +81,16 @@ fn main() {
                                                 }],
                                             };
                                             operations.push(op);
+                                        } else if id == "get_source" {
+                                            todo!()
+                                        } else if id == "get_contract" {
+                                            todo!()
+                                        } else if id == "assert_some" {
+                                            todo!()
+                                        } else if id == "transfer_tokens" {
+                                            todo!()
+                                        } else if id == "append" {
+                                            todo!()
                                         } else {
                                             todo!("{id} is not supported");
                                         }
