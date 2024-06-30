@@ -53,8 +53,8 @@ pub mod mlir {
         }
     }
 
-    impl ToString for Operation {
-        fn to_string(&self) -> String {
+    impl std::fmt::Display for Operation {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             match self.kind {
                 OperationKind::MakePair => {
                     assert_eq!(self.results.len(), 1);
@@ -63,7 +63,8 @@ pub mod mlir {
                         fst: Box::new(self.args[0].ty.clone()),
                         snd: Box::new(self.args[1].ty.clone()),
                     };
-                    format!(
+                    write!(
+                        f,
                         "{} = \"michelson.make_pair\"({}, {}): ({}, {}) -> {result_type}",
                         self.results[0].id,
                         self.args[0].id,
@@ -76,7 +77,8 @@ pub mod mlir {
                     assert_eq!(self.results.len(), 1);
                     assert_eq!(self.args.len(), 0);
                     let result = &self.results[0];
-                    format!(
+                    write!(
+                        f,
                         "{} = \"michelson.make_list\"(): () -> {}",
                         result.id, result.ty
                     )
@@ -86,7 +88,8 @@ pub mod mlir {
                     assert_eq!(self.args.len(), 0);
                     assert_eq!(self.results[0].ty, Type::Mutez);
                     let result = &self.results[0];
-                    format!(
+                    write!(
+                        f,
                         "{} = \"michelson.get_amount\"(): () -> {}",
                         result.id, result.ty
                     )
@@ -96,7 +99,8 @@ pub mod mlir {
                     assert_eq!(self.args.len(), 0);
                     assert_eq!(self.results[0].ty, Type::Address);
                     let result = &self.results[0];
-                    format!(
+                    write!(
+                        f,
                         "{} = \"michelson.get_source\"(): () -> {}",
                         result.id, result.ty
                     )
@@ -118,7 +122,7 @@ pub mod mlir {
                     assert_eq!(self.results.len(), 0);
                     assert_eq!(self.args.len(), 1);
                     let arg = &self.args[0];
-                    format!("return {}: {}", arg.id, arg.ty)
+                    write!(f, "return {}: {}", arg.id, arg.ty)
                 }
             }
         }
