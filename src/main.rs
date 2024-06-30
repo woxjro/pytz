@@ -5,7 +5,7 @@ use pytz::{
 use rustpython_parser::{ast, Parse};
 
 fn main() {
-    let python_source = include_str!("../examples/python/michelson.py");
+    let python_source = include_str!("../examples/python/boomerang.py");
     let ast = ast::Suite::parse(python_source, "<embedded>").unwrap();
 
     let mut operations = vec![];
@@ -82,7 +82,15 @@ fn main() {
                                             };
                                             operations.push(op);
                                         } else if id == "get_source" {
-                                            todo!()
+                                            let op = Operation {
+                                                kind: OperationKind::GetSource,
+                                                args: vec![],
+                                                results: vec![Value {
+                                                    id: value.id,
+                                                    ty: value.ty,
+                                                }],
+                                            };
+                                            operations.push(op);
                                         } else if id == "get_contract" {
                                             todo!()
                                         } else if id == "assert_some" {
@@ -141,7 +149,7 @@ fn main() {
         }
     );
     for op in operations {
-        println!("    {}", op.to_string());
+        println!("    {}", op);
     }
     println!("  }}");
     println!("}}");
@@ -155,6 +163,10 @@ fn get_mlir_type_from_annotation(annotation: ast::Expr) -> Type {
                 Type::Mutez
             } else if id == AnnotationToken::Operation.to_string() {
                 Type::Operation
+            } else if id == AnnotationToken::Unit.to_string() {
+                Type::Unit
+            } else if id == AnnotationToken::Address.to_string() {
+                Type::Address
             } else {
                 todo!("{id} is not supported")
             }
@@ -181,6 +193,18 @@ fn get_mlir_type_from_annotation(annotation: ast::Expr) -> Type {
                         }
                     } else {
                         panic!();
+                    }
+                } else if id == AnnotationToken::Optional.to_string() {
+                    Type::Option {
+                        elem: Box::new(get_mlir_type_from_annotation(
+                            *expr_subscript.slice.to_owned(),
+                        )),
+                    }
+                } else if id == AnnotationToken::Contract.to_string() {
+                    Type::Contract {
+                        param: Box::new(get_mlir_type_from_annotation(
+                            *expr_subscript.slice.to_owned(),
+                        )),
                     }
                 } else {
                     todo!("{id} is not supported");

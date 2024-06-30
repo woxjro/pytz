@@ -237,7 +237,11 @@ pub mod python {
     pub enum AnnotationToken {
         Final,
         Mutez,
+        Unit,
+        Address,
+        Contract,
         Operation,
+        Optional,
         List,
         Pair,
     }
@@ -247,7 +251,11 @@ pub mod python {
             match self {
                 Self::Final => write!(f, "Final"),
                 Self::Mutez => write!(f, "mutez"),
+                Self::Unit => write!(f, "Unit"),
+                Self::Address => write!(f, "addr"),
+                Self::Contract => write!(f, "Contract"),
                 Self::Operation => write!(f, "Operation"),
+                Self::Optional => write!(f, "Optional"),
                 Self::List => write!(f, "List"),
                 Self::Pair => write!(f, "Pair"),
             }
