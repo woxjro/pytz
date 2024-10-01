@@ -7,6 +7,13 @@ $ pip3 install -r ./examples/python/requirements.txt
 ```
 
 ## type checking
+
 ```sh
 $ mypy ./examples/python/<file>.py
+```
+
+## Compile Python to MLIR
+
+```sh
+$ cargo run -- --input ./examples/python/boomerang.py --output ./boomerang.mlir
 ```

@@ -1,12 +1,26 @@
+use clap::Parser as CParser;
 use pytz::{
     mlir::{Operation, OperationKind, Type, Value},
     python::AnnotationToken,
 };
 use rustpython_parser::{ast, Parse};
+use std::path::PathBuf;
+
+#[derive(CParser, Debug)]
+#[command(name = "FilePath")]
+struct Args {
+    #[arg(short, long, value_name = "INPUT", required = true)]
+    input: PathBuf,
+    #[arg(short, long, value_name = "OUTPUT", required = false)]
+    output: Option<PathBuf>,
+}
 
 fn main() {
-    let python_source = include_str!("../examples/python/boomerang.py");
-    let ast = ast::Suite::parse(python_source, "<embedded>").unwrap();
+    let args = Args::parse();
+
+    // load python source code using args.input
+    let python_source = std::fs::read_to_string(args.input).unwrap();
+    let ast = ast::Suite::parse(&python_source, "<embedded>").unwrap();
 
     let mut operations = vec![];
     let mut type_env = vec![];
@@ -246,9 +260,12 @@ fn main() {
         .find(|value| value.id == "%storage")
         .unwrap();
     let param = type_env.iter().find(|value| value.id == "%param").unwrap();
-    println!("module {{");
-    println!(
-        "  func.func @smart_contract({}: {}, {}: {}) -> {} {{",
+
+    let mut mlir_code = String::new();
+
+    mlir_code.push_str("module {\n");
+    mlir_code.push_str(&format!(
+        "  func.func @smart_contract({}: {}, {}: {}) -> {} {{\n",
         param.id,
         param.ty,
         storage.id,
@@ -259,12 +276,18 @@ fn main() {
             }),
             snd: Box::new(storage.ty.to_owned())
         }
-    );
+    ));
     for op in operations {
-        println!("    {}", op);
+        mlir_code.push_str(&format!("    {}\n", op));
     }
-    println!("  }}");
-    println!("}}");
+    mlir_code.push_str("  }\n");
+    mlir_code.push('}');
+
+    if let Some(output) = args.output {
+        std::fs::write(output, mlir_code).unwrap();
+    } else {
+        println!("{}", mlir_code);
+    }
 }
 
 fn get_mlir_type_from_annotation(annotation: ast::Expr) -> Type {
