@@ -7,7 +7,10 @@ pub struct Value {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     Address,
+    Bytes,
     Unit,
+    Int,
+    Nat,
     Mutez,
     Operation,
     Contract { param: Box<Type> },
@@ -21,9 +24,11 @@ pub enum OperationKind {
     MakePair,
     MakeList,
     GetAmount,
+    GetBytes,
     GetSource,
     GetContract,
     AssertSome,
+    Sha256,
     TransferTokens,
     Append,
     Return,
@@ -40,7 +45,10 @@ impl std::fmt::Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Address => write!(f, "!michelson.address"),
+            Self::Bytes => write!(f, "!michelson.bytes"),
             Self::Unit => write!(f, "!michelson.unit"),
+            Self::Int => write!(f, "!michelson.int"),
+            Self::Nat => write!(f, "!michelson.nat"),
             Self::Mutez => write!(f, "!michelson.mutez"),
             Self::Contract { param } => write!(f, "!michelson.contract<{}>", param),
             Self::Operation => write!(f, "!michelson.operation"),
@@ -92,6 +100,18 @@ impl std::fmt::Display for Operation {
                     result.id, result.ty
                 )
             }
+            OperationKind::GetBytes => {
+                assert_eq!(self.results.len(), 1);
+                assert_eq!(self.args.len(), 1);
+                assert_eq!(self.results[0].ty, Type::Bytes);
+                let result = &self.results[0];
+
+                write!(
+                    f,
+                    "{} = \"michelson.get_bytes\"({}): ({}) -> {}",
+                    result.id, self.args[0].id, self.args[0].ty, result.ty
+                )
+            }
             OperationKind::GetSource => {
                 assert_eq!(self.results.len(), 1);
                 assert_eq!(self.args.len(), 0);
@@ -119,6 +139,18 @@ impl std::fmt::Display for Operation {
                 write!(
                     f,
                     "{} = \"michelson.get_contract\"({}): ({}) -> {}",
+                    result.id, self.args[0].id, self.args[0].ty, result.ty
+                )
+            }
+            OperationKind::Sha256 => {
+                assert_eq!(self.args.len(), 1);
+                assert_eq!(self.results.len(), 1);
+                assert_eq!(self.args[0].ty, Type::Bytes);
+                assert_eq!(self.results[0].ty, Type::Bytes);
+                let result = &self.results[0];
+                write!(
+                    f,
+                    "{} = \"michelson.sha256\"({}): ({}) -> {}",
                     result.id, self.args[0].id, self.args[0].ty, result.ty
                 )
             }

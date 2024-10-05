@@ -225,6 +225,66 @@ fn main() {
                                                 }],
                                             };
                                             operations.push(op);
+                                        } else if id == "get_bytes" {
+                                            let args = expr_call
+                                                .args
+                                                .to_owned()
+                                                .iter()
+                                                .map(|arg| {
+                                                    if let ast::Expr::Name(expr_name) = arg {
+                                                        let id: String =
+                                                            expr_name.id.to_owned().into();
+                                                        let value = type_env
+                                                            .iter()
+                                                            .find(|value| {
+                                                                value.id == format!("%{}", id)
+                                                            })
+                                                            .unwrap();
+                                                        value.to_owned()
+                                                    } else {
+                                                        panic!();
+                                                    }
+                                                })
+                                                .collect::<Vec<Value>>();
+                                            let op = Operation {
+                                                kind: OperationKind::GetBytes,
+                                                args,
+                                                results: vec![Value {
+                                                    id: value.id,
+                                                    ty: value.ty,
+                                                }],
+                                            };
+                                            operations.push(op);
+                                        } else if id == "sha256" {
+                                            let args = expr_call
+                                                .args
+                                                .to_owned()
+                                                .iter()
+                                                .map(|arg| {
+                                                    if let ast::Expr::Name(expr_name) = arg {
+                                                        let id: String =
+                                                            expr_name.id.to_owned().into();
+                                                        let value = type_env
+                                                            .iter()
+                                                            .find(|value| {
+                                                                value.id == format!("%{}", id)
+                                                            })
+                                                            .unwrap();
+                                                        value.to_owned()
+                                                    } else {
+                                                        panic!();
+                                                    }
+                                                })
+                                                .collect::<Vec<Value>>();
+                                            let op = Operation {
+                                                kind: OperationKind::Sha256,
+                                                args,
+                                                results: vec![Value {
+                                                    id: value.id,
+                                                    ty: value.ty,
+                                                }],
+                                            };
+                                            operations.push(op);
                                         } else {
                                             todo!("{id} is not supported");
                                         }
@@ -302,6 +362,12 @@ fn get_mlir_type_from_annotation(annotation: ast::Expr) -> Type {
                 Type::Unit
             } else if id == AnnotationToken::Address.to_string() {
                 Type::Address
+            } else if id == AnnotationToken::Nat.to_string() {
+                Type::Nat
+            } else if id == AnnotationToken::Int.to_string() {
+                Type::Int
+            } else if id == AnnotationToken::Bytes.to_string() {
+                Type::Bytes
             } else {
                 todo!("{id} is not supported")
             }
