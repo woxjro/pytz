@@ -21,13 +21,18 @@ pub enum AnnotationToken {
 #[derive(Debug, Clone, PartialEq)]
 pub enum MichelsonFunction {
     Append,
+    Assert,
     AssertSome,
+    CheckSignature,
     GetAmount,
     GetBytes,
     GetContract,
+    GetFst,
+    GetSnd,
     GetSource,
     MakeList,
     MakePair,
+    Pack,
     Sha256,
     TransferTokens,
 }

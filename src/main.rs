@@ -73,8 +73,12 @@ fn main() {
                                             id.as_str().into();
                                         let kind = match michelson_function {
                                             MichelsonFunction::Append => OperationKind::Append,
+                                            MichelsonFunction::Assert => OperationKind::Assert,
                                             MichelsonFunction::AssertSome => {
                                                 OperationKind::AssertSome
+                                            }
+                                            MichelsonFunction::CheckSignature => {
+                                                OperationKind::CheckSignature
                                             }
                                             MichelsonFunction::GetAmount => {
                                                 OperationKind::GetAmount
@@ -83,11 +87,14 @@ fn main() {
                                             MichelsonFunction::GetContract => {
                                                 OperationKind::GetContract
                                             }
+                                            MichelsonFunction::GetFst => OperationKind::GetFst,
+                                            MichelsonFunction::GetSnd => OperationKind::GetSnd,
                                             MichelsonFunction::GetSource => {
                                                 OperationKind::GetSource
                                             }
                                             MichelsonFunction::MakeList => OperationKind::MakeList,
                                             MichelsonFunction::MakePair => OperationKind::MakePair,
+                                            MichelsonFunction::Pack => OperationKind::Pack,
                                             MichelsonFunction::Sha256 => OperationKind::Sha256,
                                             MichelsonFunction::TransferTokens => {
                                                 OperationKind::TransferTokens
