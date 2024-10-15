@@ -1,7 +1,7 @@
 use clap::Parser as CParser;
 use pytz::{
     mlir::{Operation, OperationKind, Type, Value},
-    python::AnnotationToken,
+    python::{AnnotationToken, MichelsonFunction},
 };
 use rustpython_parser::{ast, Parse};
 use std::path::PathBuf;
@@ -40,254 +40,64 @@ fn main() {
                         dbg!(&value);
                         if let Some(value) = value {
                             type_env.push(value.to_owned());
+                            let results = vec![Value {
+                                id: value.id,
+                                ty: value.ty,
+                            }];
                             if let Some(call) = stmt_ann_assign.value.as_ref() {
                                 if let ast::Expr::Call(expr_call) = *call.to_owned() {
                                     let func = *expr_call.func.to_owned();
                                     if let ast::Expr::Name(expr_name) = func {
                                         let id: String = expr_name.id.into();
-                                        if id == "make_list" {
-                                            let op = Operation {
-                                                kind: OperationKind::MakeList,
-                                                args: vec![],
-                                                results: vec![Value {
-                                                    id: value.id,
-                                                    ty: value.ty,
-                                                }],
-                                            };
-                                            operations.push(op);
-                                        } else if id == "get_amount" {
-                                            let op = Operation {
-                                                kind: OperationKind::GetAmount,
-                                                args: vec![],
-                                                results: vec![Value {
-                                                    id: value.id,
-                                                    ty: value.ty,
-                                                }],
-                                            };
-                                            operations.push(op);
-                                        } else if id == "make_pair" {
-                                            let args = expr_call
-                                                .args
-                                                .to_owned()
-                                                .iter()
-                                                .map(|arg| {
-                                                    if let ast::Expr::Name(expr_name) = arg {
-                                                        let id: String =
-                                                            expr_name.id.to_owned().into();
-                                                        let value = type_env
-                                                            .iter()
-                                                            .find(|value| {
-                                                                value.id == format!("%{}", id)
-                                                            })
-                                                            .unwrap();
-                                                        value.to_owned()
-                                                    } else {
-                                                        panic!();
-                                                    }
-                                                })
-                                                .collect::<Vec<Value>>();
-                                            let op = Operation {
-                                                kind: OperationKind::MakePair,
-                                                args,
-                                                results: vec![Value {
-                                                    id: value.id,
-                                                    ty: value.ty,
-                                                }],
-                                            };
-                                            operations.push(op);
-                                        } else if id == "get_source" {
-                                            let op = Operation {
-                                                kind: OperationKind::GetSource,
-                                                args: vec![],
-                                                results: vec![Value {
-                                                    id: value.id,
-                                                    ty: value.ty,
-                                                }],
-                                            };
-                                            operations.push(op);
-                                        } else if id == "get_contract" {
-                                            let args = expr_call
-                                                .args
-                                                .to_owned()
-                                                .iter()
-                                                .map(|arg| {
-                                                    if let ast::Expr::Name(expr_name) = arg {
-                                                        let id: String =
-                                                            expr_name.id.to_owned().into();
-                                                        let value = type_env
-                                                            .iter()
-                                                            .find(|value| {
-                                                                value.id == format!("%{}", id)
-                                                            })
-                                                            .unwrap();
-                                                        value.to_owned()
-                                                    } else {
-                                                        panic!();
-                                                    }
-                                                })
-                                                .collect::<Vec<Value>>();
-                                            let op = Operation {
-                                                kind: OperationKind::GetContract,
-                                                args,
-                                                results: vec![Value {
-                                                    id: value.id,
-                                                    ty: value.ty,
-                                                }],
-                                            };
-                                            operations.push(op);
-                                        } else if id == "assert_some" {
-                                            let args = expr_call
-                                                .args
-                                                .to_owned()
-                                                .iter()
-                                                .map(|arg| {
-                                                    if let ast::Expr::Name(expr_name) = arg {
-                                                        let id: String =
-                                                            expr_name.id.to_owned().into();
-                                                        let value = type_env
-                                                            .iter()
-                                                            .find(|value| {
-                                                                value.id == format!("%{}", id)
-                                                            })
-                                                            .unwrap();
-                                                        value.to_owned()
-                                                    } else {
-                                                        panic!();
-                                                    }
-                                                })
-                                                .collect::<Vec<Value>>();
-                                            let op = Operation {
-                                                kind: OperationKind::AssertSome,
-                                                args,
-                                                results: vec![Value {
-                                                    id: value.id,
-                                                    ty: value.ty,
-                                                }],
-                                            };
-                                            operations.push(op);
-                                        } else if id == "transfer_tokens" {
-                                            let args = expr_call
-                                                .args
-                                                .to_owned()
-                                                .iter()
-                                                .map(|arg| {
-                                                    if let ast::Expr::Name(expr_name) = arg {
-                                                        let id: String =
-                                                            expr_name.id.to_owned().into();
-                                                        let value = type_env
-                                                            .iter()
-                                                            .find(|value| {
-                                                                value.id == format!("%{}", id)
-                                                            })
-                                                            .unwrap();
-                                                        value.to_owned()
-                                                    } else {
-                                                        panic!();
-                                                    }
-                                                })
-                                                .collect::<Vec<Value>>();
-                                            let op = Operation {
-                                                kind: OperationKind::TransferTokens,
-                                                args,
-                                                results: vec![Value {
-                                                    id: value.id,
-                                                    ty: value.ty,
-                                                }],
-                                            };
-                                            operations.push(op);
-                                        } else if id == "append" {
-                                            let args = expr_call
-                                                .args
-                                                .to_owned()
-                                                .iter()
-                                                .map(|arg| {
-                                                    if let ast::Expr::Name(expr_name) = arg {
-                                                        let id: String =
-                                                            expr_name.id.to_owned().into();
-                                                        let value = type_env
-                                                            .iter()
-                                                            .find(|value| {
-                                                                value.id == format!("%{}", id)
-                                                            })
-                                                            .unwrap();
-                                                        value.to_owned()
-                                                    } else {
-                                                        panic!();
-                                                    }
-                                                })
-                                                .collect::<Vec<Value>>();
-                                            let op = Operation {
-                                                kind: OperationKind::Append,
-                                                args,
-                                                results: vec![Value {
-                                                    id: value.id,
-                                                    ty: value.ty,
-                                                }],
-                                            };
-                                            operations.push(op);
-                                        } else if id == "get_bytes" {
-                                            let args = expr_call
-                                                .args
-                                                .to_owned()
-                                                .iter()
-                                                .map(|arg| {
-                                                    if let ast::Expr::Name(expr_name) = arg {
-                                                        let id: String =
-                                                            expr_name.id.to_owned().into();
-                                                        let value = type_env
-                                                            .iter()
-                                                            .find(|value| {
-                                                                value.id == format!("%{}", id)
-                                                            })
-                                                            .unwrap();
-                                                        value.to_owned()
-                                                    } else {
-                                                        panic!();
-                                                    }
-                                                })
-                                                .collect::<Vec<Value>>();
-                                            let op = Operation {
-                                                kind: OperationKind::GetBytes,
-                                                args,
-                                                results: vec![Value {
-                                                    id: value.id,
-                                                    ty: value.ty,
-                                                }],
-                                            };
-                                            operations.push(op);
-                                        } else if id == "sha256" {
-                                            let args = expr_call
-                                                .args
-                                                .to_owned()
-                                                .iter()
-                                                .map(|arg| {
-                                                    if let ast::Expr::Name(expr_name) = arg {
-                                                        let id: String =
-                                                            expr_name.id.to_owned().into();
-                                                        let value = type_env
-                                                            .iter()
-                                                            .find(|value| {
-                                                                value.id == format!("%{}", id)
-                                                            })
-                                                            .unwrap();
-                                                        value.to_owned()
-                                                    } else {
-                                                        panic!();
-                                                    }
-                                                })
-                                                .collect::<Vec<Value>>();
-                                            let op = Operation {
-                                                kind: OperationKind::Sha256,
-                                                args,
-                                                results: vec![Value {
-                                                    id: value.id,
-                                                    ty: value.ty,
-                                                }],
-                                            };
-                                            operations.push(op);
-                                        } else {
-                                            todo!("{id} is not supported");
-                                        }
+                                        let args = expr_call
+                                            .args
+                                            .to_owned()
+                                            .iter()
+                                            .map(|arg| {
+                                                if let ast::Expr::Name(expr_name) = arg {
+                                                    let id: String = expr_name.id.to_owned().into();
+                                                    let value = type_env
+                                                        .iter()
+                                                        .find(|value| {
+                                                            value.id == format!("%{}", id)
+                                                        })
+                                                        .unwrap();
+                                                    value.to_owned()
+                                                } else {
+                                                    panic!();
+                                                }
+                                            })
+                                            .collect::<Vec<Value>>();
+
+                                        let michelson_function: MichelsonFunction =
+                                            id.as_str().into();
+                                        let kind = match michelson_function {
+                                            MichelsonFunction::Append => OperationKind::Append,
+                                            MichelsonFunction::AssertSome => {
+                                                OperationKind::AssertSome
+                                            }
+                                            MichelsonFunction::GetAmount => {
+                                                OperationKind::GetAmount
+                                            }
+                                            MichelsonFunction::GetBytes => OperationKind::GetBytes,
+                                            MichelsonFunction::GetContract => {
+                                                OperationKind::GetContract
+                                            }
+                                            MichelsonFunction::GetSource => {
+                                                OperationKind::GetSource
+                                            }
+                                            MichelsonFunction::MakeList => OperationKind::MakeList,
+                                            MichelsonFunction::MakePair => OperationKind::MakePair,
+                                            MichelsonFunction::Sha256 => OperationKind::Sha256,
+                                            MichelsonFunction::TransferTokens => {
+                                                OperationKind::TransferTokens
+                                            }
+                                        };
+                                        operations.push(Operation {
+                                            kind,
+                                            args,
+                                            results,
+                                        });
                                     }
                                 }
                             }
@@ -309,7 +119,9 @@ fn main() {
                             operations.push(op);
                         }
                     }
-                    _ => {}
+                    stmt => {
+                        panic!("{:?} is not supported yet", stmt);
+                    }
                 });
             }
         }
@@ -358,6 +170,14 @@ fn get_mlir_type_from_annotation(annotation: ast::Expr) -> Type {
                 Type::Mutez
             } else if id == AnnotationToken::Operation.to_string() {
                 Type::Operation
+            } else if id == AnnotationToken::Key.to_string() {
+                Type::Key
+            } else if id == AnnotationToken::Bool.to_string() {
+                Type::Bool
+            } else if id == AnnotationToken::Signature.to_string() {
+                Type::Signature
+            } else if id == AnnotationToken::String.to_string() {
+                Type::String
             } else if id == AnnotationToken::Unit.to_string() {
                 Type::Unit
             } else if id == AnnotationToken::Address.to_string() {
