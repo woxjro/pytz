@@ -73,7 +73,9 @@ fn main() {
                                             id.as_str().into();
                                         let kind = match michelson_function {
                                             MichelsonFunction::Append => OperationKind::Append,
-                                            MichelsonFunction::Assert => OperationKind::Assert,
+                                            MichelsonFunction::Assert => {
+                                                panic!("Assert is not supported in this context")
+                                            }
                                             MichelsonFunction::AssertSome => {
                                                 OperationKind::AssertSome
                                             }
@@ -107,6 +109,42 @@ fn main() {
                                         });
                                     }
                                 }
+                            }
+                        }
+                    }
+                    ast::Stmt::Expr(stmt_expr) => {
+                        if let ast::Expr::Call(expr_call) = stmt_expr.value.as_ref() {
+                            let func = *expr_call.func.to_owned();
+                            if let ast::Expr::Name(expr_name) = func {
+                                let id: String = expr_name.id.into();
+                                let args = expr_call
+                                    .args
+                                    .to_owned()
+                                    .iter()
+                                    .map(|arg| {
+                                        if let ast::Expr::Name(expr_name) = arg {
+                                            let id: String = expr_name.id.to_owned().into();
+                                            let value = type_env
+                                                .iter()
+                                                .find(|value| value.id == format!("%{}", id))
+                                                .unwrap();
+                                            value.to_owned()
+                                        } else {
+                                            panic!();
+                                        }
+                                    })
+                                    .collect::<Vec<Value>>();
+
+                                let michelson_function: MichelsonFunction = id.as_str().into();
+                                let kind = match michelson_function {
+                                    MichelsonFunction::Assert => OperationKind::Assert,
+                                    _ => panic!("{:?} is not supported yet", michelson_function),
+                                };
+                                operations.push(Operation {
+                                    kind,
+                                    args,
+                                    results: vec![],
+                                });
                             }
                         }
                     }
