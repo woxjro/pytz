@@ -1,4 +1,4 @@
-# pytz
+# pytz: Compiler from Python to MLIR Michelson dialect
 
 ```sh
 $ python3 -m venv venv
